@@ -1,0 +1,42 @@
+---
+title: "Logistic_model"
+output: html_document
+date: "2025-03-11"
+---
+
+```{r data}
+library(dplyr)
+data = read.csv("C:\\Users\\marga\\OneDrive\\Desktop\\UBC_PhD degree\\STAT_550\\HW3\\imputed_data.csv")
+data_2 = data[, -c(1:2)]
+
+#Combining comorbidity variables into one variable ( but won't be used for this frist draft)
+data_2$Comorbidity = rowSums((data_2[4:10] != "No")) == 0
+data_2 %>% count(data_2$Comorbidity)
+data_2$Comorbidity = as.character(data_2$Comorbidity)
+data_2$Comorbidity[data_2$Comorbidity == "FALSE"] = 1
+data_2$Comorbidity[data_2$Comorbidity == "TRUE"] = 0
+data_2 %>% count(data_2$Comorbidity)
+
+#Converting adverse outcome values to 1 and 0
+data_2$Adverse_Outcome[data_2$Adverse_Outcome == "Yes"] = 1
+data_2$Adverse_Outcome[data_2$Adverse_Outcome == "No"] = 0
+
+#Transforming data types as factors
+data_2 = data_2%>%mutate(across(where(is.character), as.factor))
+
+#Stepwise model for logistic regression
+glm_model2 = step(glm(Adverse_Outcome~Age + Sex + Priority_Transfer_Recode + log_Transfer_Time_Hours+
+                        HTN + Dyslipidemia + Smoking + Diabetes + COPD + CKD + Previous_MI, data = data_2, 
+                      family = binomial(link = "logit")))
+
+#Model fitting with the most significant variables
+glm_model_fin = glm(Adverse_Outcome ~ Age + Sex + Priority_Transfer_Recode + log_Transfer_Time_Hours + HTN + Dyslipidemia + Smoking + Diabetes + COPD + CKD, 
+                    data = data_2, family = binomial(link = "logit"))
+summary(glm_model_fin)
+
+#taking out Priority_Transfer_Recode variable as it is not significant in the model
+
+glm_model_another = glm(Adverse_Outcome ~ Age + Sex + log_Transfer_Time_Hours + HTN + Dyslipidemia + Smoking + Diabetes + COPD + CKD, 
+                        data = data_2, family = binomial(link = "logit"))
+summary(glm_model_another)
+```
